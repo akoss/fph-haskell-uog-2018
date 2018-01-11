@@ -10,12 +10,12 @@ module Tafl.Core
   , initGameState
   , commandFromString
   , help_text
-  , Board
-  , GameState
+  , Board(..)
   ) where
 
 import System.Exit
 import Data.List
+import System.IO
 
 -- | The core game state that captures the state of the board, and
 -- whether we are playing a game or not.
@@ -42,9 +42,7 @@ boardStateFromIOString :: IO [String] -> IO Board
 boardStateFromIOString a = do
   contents <- a
   let nextPlayer = (contents !! 0) !! 0
-  putStrLn [nextPlayer]
-  let fields = keepOnlyRelevantCharacters (contents !! 1 ++ contents !! 2 ++ contents !! 3)
-  putStrLn fields
+  let fields = keepOnlyRelevantCharacters (contents !! 1 ++ contents !! 2 ++ contents !! 3 ++ contents !! 4 ++ contents !! 5 ++ contents !! 6 ++ contents !! 7 ++ contents !! 8 ++ contents !! 9)
   return (Board fields nextPlayer)
 
 dummyIOBoard :: Board -> IO Board
@@ -78,6 +76,7 @@ data Command = Help
              | Exit
              | Start
              | Stop
+             | Move
 
 -- | Try to construct a command from the given string.
 commandFromString :: String -> Either TaflError Command
@@ -87,6 +86,7 @@ commandFromString (':':rest) =
     ["exit"] -> Right Exit
     ["start"] -> Right Start
     ["stop"]  -> Right Stop
+    ["move"] -> Right Move
 
     -- You need to specify how to recognise the remaining commands and their arguments here.
 

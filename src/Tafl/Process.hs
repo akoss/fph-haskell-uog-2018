@@ -29,7 +29,10 @@ processCommand st Exit = do
 processCommand st Start = do
    let newSt = st {inGame=True}
    putStrLn "Starting Game."
-   --putStrLn $ fields $ board st
+   a <- board st
+   putStrLn $ printableMap $ fields a
+   putStrLn $ printableNextPlayer $ nextPlayer a
+
    pure $ Right newSt
 
 processCommand st Stop = do
@@ -37,10 +40,14 @@ processCommand st Stop = do
    putStrLn "Stopping Game."
    pure $ Right newSt
 
+processCommand st Move = do
+  putStrLn "Move"
+  let newSt = st {inGame=False}
+  pure $ Right newSt
+
 -- The remaining commands are to be added here.
 
 processCommand st _ = pure $ Left (UnknownCommand)
-
 
 -- | Process a user given command presented as a String, and update
 -- the GameState.
