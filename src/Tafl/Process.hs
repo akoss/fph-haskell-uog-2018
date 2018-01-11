@@ -29,6 +29,7 @@ processCommand st Exit = do
 processCommand st Start = do
    let newSt = st {inGame=True}
    putStrLn "Starting Game."
+   --putStrLn $ fields $ board st
    pure $ Right newSt
 
 processCommand st Stop = do

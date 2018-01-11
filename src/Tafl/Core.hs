@@ -5,10 +5,13 @@ module Tafl.Core
   ( GameState(..)
   , TaflError(..)
   , Command(..)
+  , defaultBoardState
   , defaultGameState
   , initGameState
   , commandFromString
   , help_text
+  , Board
+  , GameState
   ) where
 
 import System.Exit
@@ -27,11 +30,33 @@ data Board = Board
 data GameState = GameState
   { inGame     :: Bool
   , inTestMode :: Bool
-  , board      :: Board
+  , board      :: IO Board
   }
 
-defaultBoardState :: Board
-defaultBoardState = Board "   000       0        G    0   G   000GGLGG000   G   0    G        0       000   " '0'
+readLines :: FilePath -> IO [String]
+readLines = fmap lines . readFile
+
+keepOnlyRelevantCharacters xs = [ x | x <- xs, (x `elem` " OGL") ]
+
+boardStateFromIOString :: IO [String] -> IO Board
+boardStateFromIOString a = do
+  contents <- a
+  let nextPlayer = (contents !! 0) !! 0
+  putStrLn [nextPlayer]
+  let fields = keepOnlyRelevantCharacters (contents !! 1 ++ contents !! 2 ++ contents !! 3)
+  putStrLn fields
+  return (Board fields nextPlayer)
+
+dummyIOBoard :: Board -> IO Board
+dummyIOBoard a = return a
+
+boardStateFromFile :: FilePath -> IO Board 
+boardStateFromFile a = boardStateFromIOString $ readLines a
+
+-- To maintain easy compatibility with file-based game states, we pretend that the defaultBoard is from a file: 
+defaultBoardState :: IO Board
+-- As on Figure 4 of FP(H) Practical 2 requirements:
+defaultBoardState = dummyIOBoard $ Board "   OOO       O        G    O   G   OOOGGLGGOOO   G   O    G        O       OOO   " 'O'
 
 defaultGameState :: GameState
 defaultGameState = GameState False False defaultBoardState
@@ -41,7 +66,7 @@ initGameState :: Maybe FilePath
               -> Bool
               -> IO (Either TaflError GameState)
 initGameState Nothing  b = pure $ Right $ GameState False b defaultBoardState
-initGameState (Just f) b = pure $ Left NotYetImplemented
+initGameState (Just f) b = pure $ Right $ GameState False b $ boardStateFromFile f
 
 -- | Errors encountered by the game, you will need to extend this to capture *ALL* possible errors.
 data TaflError = InvalidCommand String
