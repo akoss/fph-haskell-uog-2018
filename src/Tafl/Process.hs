@@ -13,6 +13,7 @@ import System.Exit
 
 import Tafl.Core
 import Tafl.Logic
+import Data.Maybe
 
 -- | Process user commands and updates the GameState.
 -- Returns a `TaflError`
@@ -28,30 +29,43 @@ processCommand st Exit str = do
   exitWith ExitSuccess
 
 processCommand st Start str = do
-   let newSt = st {inGame=True}
-   putStrLn "Starting Game."
-   b <- board st
-   putStrLn $ printableMap $ fields b
-   putStrLn $ printableNextPlayer $ nextPlayer b
+   if inGame st
+    then do 
+       pure $ Left (CommandCannotBeUsed)
+    else do
+       let newSt = st {inGame=True}
+       putStrLn "Starting Game."
+       b <- board st
+       putStrLn $ printableMap $ fields b
+       putStrLn $ (printablePlayer $ nextPlayer b)  ++ " is next"
 
-   pure $ Right newSt
+       pure $ Right newSt
 
 processCommand st Stop str = do
-   let newSt = st {inGame=False}
-   putStrLn "Stopping Game."
-   pure $ Right newSt
+   if inGame st
+    then do
+     let newSt = st {inGame=False}
+     putStrLn "Stopping Game."
+     pure $ Right newSt
+    else do
+      pure $ Left (CommandCannotBeUsed)
 
 processCommand st Move str = do
-  putStrLn str
   b <- board st
-  let newBoard = readableMove b (words str !! 1) (words str !! 2)
-  let finalBoard = (boardToSave b newBoard)
-  let newSt = st {board = pure $ finalBoard}
-
-  putStrLn $ printableMap $ fields finalBoard
-  putStrLn $ printableNextPlayer $ nextPlayer finalBoard
-  pure $ Right newSt
-
+  if inGame st
+    then do    
+      let newBoard = readableMove b (words str !! 1) (words str !! 2)
+      if isNothing newBoard
+        then do 
+          pure $ Left (InvalidMove)
+        else do
+          let finalBoard = (boardToSave b newBoard)
+          let newSt = st {board = pure $ finalBoard}    
+          putStrLn $ printableMap $ fields finalBoard
+          putStrLn $ (printablePlayer $ nextPlayer finalBoard)  ++ " is next"
+          pure $ Right newSt
+    else do
+      pure $ Left (CommandCannotBeUsed)
 -- The remaining commands are to be added here.
 
 processCommand st _ str = pure $ Left (UnknownCommand)
@@ -74,10 +88,12 @@ processCommandStr st str =
 
 -- | Print an Error to STDOUT.
 printError :: TaflError -> IO ()
-printError (NotYetImplemented) = do
-  putStrLn "Not Yet Implemented."
 printError (UnknownCommand) = do
-  putStrLn "The command was not recognised"
+  putStrLn "The entered command was not recognised."
+printError (InvalidMove) = do
+  putStrLn "Invalid Move!"
+printError (CommandCannotBeUsed) = do
+  putStrLn "The command cannot be used."
 printError (InvalidCommand msg) = do
   putStrLn "You entered an invalid command:"
   putStr "\t"

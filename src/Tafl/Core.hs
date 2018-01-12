@@ -69,7 +69,8 @@ initGameState (Just f) b = pure $ Right $ GameState False b $ boardStateFromFile
 -- | Errors encountered by the game, you will need to extend this to capture *ALL* possible errors.
 data TaflError = InvalidCommand String
                | UnknownCommand
-               | NotYetImplemented
+               | InvalidMove
+               | CommandCannotBeUsed
 
 -- | REPL commands, you will need to extend this to capture all permissible REPL commands.
 data Command = Help
