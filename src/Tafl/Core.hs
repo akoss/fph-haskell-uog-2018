@@ -79,17 +79,16 @@ data Command = Help
              | Move
 
 -- | Try to construct a command from the given string.
-commandFromString :: String -> Either TaflError Command
-commandFromString (':':rest) =
-  case words rest of
-    ["help"] -> Right Help
-    ["exit"] -> Right Exit
-    ["start"] -> Right Start
-    ["stop"]  -> Right Stop
-    ["move"] -> Right Move
+commandFromString :: String -> Either TaflError (Command, String)
+commandFromString (':':rest) = do
 
-    -- You need to specify how to recognise the remaining commands and their arguments here.
-
+  -- Checking whether a command has been entered, and if that command is "move" then requiring 2 other parameters
+  case if (length $ words rest) > 0 && (((words rest !! 0) /= "move") || ((length $ words rest) == 3) && length (words rest !! 1) == 2 && length (words rest !! 2) == 2) then words rest !! 0 else "" of
+    "help" -> Right (Help, rest)
+    "exit" -> Right (Exit, rest)
+    "start" -> Right (Start, rest)
+    "stop"  -> Right (Stop, rest)
+    "move" -> Right (Move, rest)
     _         -> Left UnknownCommand
 
 commandFromString _  = Left UnknownCommand
